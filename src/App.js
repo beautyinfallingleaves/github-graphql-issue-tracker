@@ -1,26 +1,45 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import axios from 'axios'
 
-function App() {
+const TITLE = 'GraphQL GitGub Client'
+
+const axiosGitHubGraphQL = axios.create({
+  baseURL: 'https://api.github.com/graphql',
+  headers: {
+    Authorization: `bearer ${process.env.REACT_APP_GITHUB_PERSONAL_ACCESS_TOKEN}`,
+  },
+});
+
+const App = (props) => {
+  function handleChange() {
+
+  }
+
+  function handleSubmit() {
+
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1>{TITLE}</h1>
+
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="url">
+          Show open issues for https://github.com/
+        </label>
+        <input
+          id="url"
+          type="text"
+          onChange={handleChange}
+          style={{width: '300px'}}
+        />
+        <button type="submit">Search</button>
+      </form>
+      <hr/>
+
+      {/* Result will go here */}
     </div>
-  );
+  )
 }
 
 export default App;
