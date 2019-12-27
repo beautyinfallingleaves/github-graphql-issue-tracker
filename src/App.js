@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios'
-import {Paper, Typography, Button, Link} from '@material-ui/core'
+import {Box, Paper, Typography, Button, Link} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 require('dotenv').config()
 
@@ -17,75 +17,105 @@ const useStyles = makeStyles({
     minWidth: '70%',
     margin: '15%',
     padding: '5px',
+  },
+  formControls: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center'
   }
 })
 
-const TITLE = 'GraphQL GitHub Client'
-const GET_REPOSITORY_OF_ORGANIZATION = `{
-  organization(login: "the-road-to-learn-react") {
-    name
-    url
-    repository(name: "the-road-to-learn-react") {
-      name
-      url
-    }
-  }
-}`
+const TITLE = 'Search GitHub Issues by Repository (via GraphQL)'
 
+// *****
+// Create axios instance
 const axiosGitHubGraphQL = axios.create({
   baseURL: 'https://api.github.com/graphql',
   headers: {
     Authorization: `bearer ${process.env.REACT_APP_GITHUB_PERSONAL_ACCESS_TOKEN}`,
   },
-});
+})
+
+const GET_ISSUES_OF_REPOSITORY_QUERY = `
+  query getIssuesOfRepository ($organization: String!, $repository: String!) {
+  organization(login: $organization) {
+    name
+    url
+    repository(name: $repository) {
+      name
+      url
+      issues(last: 5) {
+        edges {
+          node {
+            id
+            title
+            url
+          }
+        }
+      }
+    }
+  }
+}`
 
 export default function App(props) {
   const classes = useStyles()
 
-  const [path, setPath] = useState('the-road-to-learn-react')
+  const [path, setPath] = useState('facebook/create-react-app')
   function handleChange(event) {
     setPath(event.target.value)
   }
 
   useEffect(() => {
     //fetch data
-    onFetchFromGitHub()
-  }, [path])
+    fetchFromGitHub(path)
+  }, [])
 
   function handleSubmit(event) {
     //fetch data
+    fetchFromGitHub(path)
     event.preventDefault()
   }
 
   const [organization, setOrganization] = useState(null)
   const [errors, setErrors] = useState(null)
-  function onFetchFromGitHub() {
-    axiosGitHubGraphQL
-      .post('', {query: GET_REPOSITORY_OF_ORGANIZATION})
-      .then(result => {
-        setOrganization(result.data.data.organization)
-        setErrors(result.data.errors)
-      })
+  function fetchFromGitHub(path) {
+    getIssuesOfRepository(path).then(queryResult => {
+      setOrganization(queryResult.data.data.organization)
+      setErrors(queryResult.data.errors)
+    })
+  }
+
+  function getIssuesOfRepository(path) {
+    const [organization, repository] = path.split('/')
+
+    return axiosGitHubGraphQL.post('', {
+      query: GET_ISSUES_OF_REPOSITORY_QUERY,
+      variables: { organization, repository }
+    })
   }
 
   return (
-    <div className={classes.root}>
+    <Box className={classes.root}>
       <Paper className={classes.searchCard} elevation={5}>
-        <Typography variant="h4" color="primary">{TITLE}</Typography>
+        <Typography variant="h5" color="primary">{TITLE}</Typography>
 
         <form onSubmit={handleSubmit}>
-          <label htmlFor="url">
-            Show open issues for https://github.com/
-          </label>
-          <input
-            id="url"
-            type="text"
-            value={path}
-            onChange={handleChange}
-            style={{width: '300px'}}
-            placeholder="enter repository name"
-          />
-          <Button type="submit" variant="contained" color="primary" size="small">Search</Button>
+          <Box className={classes.formControls}>
+            <Box>
+              <label htmlFor="url">
+                Show open issues for https://github.com/
+              </label>
+              <input
+                id="url"
+                type="text"
+                value={path}
+                onChange={handleChange}
+                style={{width: '300px'}}
+                placeholder="organization-name/repository-name"
+              />
+            </Box>
+            <Button type="submit" variant="contained" color="primary" size="small">Search</Button>
+          </Box>
         </form>
         <hr/>
         {organization ? (
@@ -95,24 +125,39 @@ export default function App(props) {
           )
         }
       </Paper>
-    </div>
+    </Box>
   )
 }
 
 const Organization = ({organization, errors}) => {
   if (errors) {
     return (
-      <div>
+      <Box>
         <Typography variant="h6">Something went wrong:</Typography>
         {errors.map(error => error.message).join()}
-      </div>
+      </Box>
     )
   }
 
   return (
-    <div>
+    <Box>
       <Typography variant="h6">Issues from Organization:</Typography>
       <Link href={organization.url}>{organization.name}</Link>
-    </div>
+      <Repository repository={organization.repository} />
+    </Box>
   )
 }
+
+const Repository = ({repository}) => (
+  <Box>
+    <Typography variant="h6">In Repository:</Typography>
+    <Link href={repository.url}>{repository.name}</Link>
+    <ul>
+      {repository.issues.edges.map(issue => (
+        <li key={issue.node.id}>
+          <Link href={issue.node.url}>{issue.node.title}</Link>
+        </li>
+      ))}
+    </ul>
+  </Box>
+)
