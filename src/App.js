@@ -1,12 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios'
-import {Box, Paper, Typography, Button, Link} from '@material-ui/core'
+import {Box, Paper, Typography, Button, Link, Avatar} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 require('dotenv').config()
 
 // *******
 // styling
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   root: {
     display: 'flex',
     minHeight: '100vh',
@@ -22,8 +22,20 @@ const useStyles = makeStyles({
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center'
+  },
+  organizationInfo: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  organizationDetails: {
+    marginLeft: '8px',
+  },
+  small: {
+    width: theme.spacing(3),
+    height: theme.spacing(3),
   }
-})
+}))
 
 const TITLE = 'Search GitHub Issues by Repository (via GraphQL)'
 
@@ -41,21 +53,32 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
   organization(login: $organization) {
     name
     url
+    avatarUrl
+    description
     repository(name: $repository) {
       name
       url
-      issues(last: 5) {
+      issues(last: 5, states: [OPEN]) {
         edges {
           node {
             id
             title
             url
+            reactions(last: 3) {
+              edges {
+                node {
+                  id
+                  content
+                }
+              }
+            }
           }
         }
       }
     }
   }
 }`
+
 
 export default function App(props) {
   const classes = useStyles()
@@ -130,6 +153,7 @@ export default function App(props) {
 }
 
 const Organization = ({organization, errors}) => {
+  const classes = useStyles()
   if (errors) {
     return (
       <Box>
@@ -142,7 +166,11 @@ const Organization = ({organization, errors}) => {
   return (
     <Box>
       <Typography variant="h6">Issues from Organization:</Typography>
-      <Link href={organization.url}>{organization.name}</Link>
+      <Box className={classes.organizationInfo}>
+        <Avatar className={classes.small} src={organization.avatarUrl}/>
+        <Link className={classes.organizationDetails} href={organization.url}>{organization.name}</Link>
+        <Typography className={classes.organizationDetails} variant="body1">"{organization.description}"</Typography>
+      </Box>
       <Repository repository={organization.repository} />
     </Box>
   )
@@ -156,6 +184,12 @@ const Repository = ({repository}) => (
       {repository.issues.edges.map(issue => (
         <li key={issue.node.id}>
           <Link href={issue.node.url}>{issue.node.title}</Link>
+
+          <ul>
+            {issue.node.reactions.edges.map(reaction => (
+              <li key={reaction.node.id}>{reaction.node.content}</li>
+            ))}
+          </ul>
         </li>
       ))}
     </ul>
