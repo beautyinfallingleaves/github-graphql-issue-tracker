@@ -14,9 +14,9 @@ const useStyles = makeStyles(theme => ({
   },
   searchCard: {
     minHeight: '15%',
-    minWidth: '70%',
+    // minWidth: '70%',
     margin: '15%',
-    padding: '5px',
+    padding: '10px',
   },
   formControls: {
     display: 'flex',
@@ -26,10 +26,11 @@ const useStyles = makeStyles(theme => ({
   organizationInfo: {
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   organizationDetails: {
     marginLeft: '8px',
+    fontStyle: 'italic',
   },
   small: {
     width: theme.spacing(3),
@@ -49,7 +50,11 @@ const axiosGitHubGraphQL = axios.create({
 })
 
 const GET_ISSUES_OF_REPOSITORY_QUERY = `
-  query getIssuesOfRepository ($organization: String!, $repository: String!) {
+  query getIssuesOfRepository (
+    $organization: String!,
+    $repository: String!,
+    $endCursor: String
+  ) {
   organization(login: $organization) {
     name
     url
@@ -58,7 +63,7 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
     repository(name: $repository) {
       name
       url
-      issues(last: 5, states: [OPEN]) {
+      issues(first: 5, after: $endCursor, states: [OPEN]) {
         edges {
           node {
             id
@@ -73,6 +78,11 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
               }
             }
           }
+        }
+        totalCount
+        pageInfo {
+          endCursor
+          hasNextPage
         }
       }
     }
@@ -101,20 +111,53 @@ export default function App(props) {
 
   const [organization, setOrganization] = useState(null)
   const [errors, setErrors] = useState(null)
-  function fetchFromGitHub(path) {
-    getIssuesOfRepository(path).then(queryResult => {
-      setOrganization(queryResult.data.data.organization)
-      setErrors(queryResult.data.errors)
+  function fetchFromGitHub(path, endCursor) {
+    getIssuesOfRepository(path, endCursor).then(queryResult => {
+      const {data, errors} = queryResult.data
+
+      // if no endCursor provided, directly set state of organization and errors
+      if (!endCursor) {
+        setOrganization(data.organization)
+        setErrors(errors)
+      } else {
+        // if endCursor is provided, merge old issues with new issues
+        const {edges: oldIssues} = organization.repository.issues
+        const {edges: newIssues} = data.organization.repository.issues
+        const updatedIssues = [...oldIssues, ...newIssues]
+
+        const updatedOrganization = {
+          ...data.organization,
+          repository: {
+            ...data.organization.repository,
+            issues: {
+              ...data.organization.repository.issues,
+              edges: updatedIssues,
+            }
+          }
+        }
+
+        console.log('organization:', organization)
+        console.log('updated organization: ', updatedOrganization)
+
+        setOrganization(updatedOrganization)
+        setErrors(errors)
+      }
+
     })
   }
 
-  function getIssuesOfRepository(path) {
+  function getIssuesOfRepository(path, endCursor) {
     const [organization, repository] = path.split('/')
 
     return axiosGitHubGraphQL.post('', {
       query: GET_ISSUES_OF_REPOSITORY_QUERY,
-      variables: { organization, repository }
+      variables: { organization, repository, endCursor }
     })
+  }
+
+  function fetchMoreIssues() {
+    const {endCursor} = organization.repository.issues.pageInfo
+    fetchFromGitHub(path, endCursor)
   }
 
   return (
@@ -142,7 +185,7 @@ export default function App(props) {
         </form>
         <hr/>
         {organization ? (
-            <Organization organization={organization} />
+            <Organization organization={organization} fetchMoreIssues={fetchMoreIssues} />
           ) : (
             <Typography variant="body1">No Organization yet.</Typography>
           )
@@ -152,7 +195,7 @@ export default function App(props) {
   )
 }
 
-const Organization = ({organization, errors}) => {
+const Organization = ({organization, errors, fetchMoreIssues}) => {
   const classes = useStyles()
   if (errors) {
     return (
@@ -165,21 +208,25 @@ const Organization = ({organization, errors}) => {
 
   return (
     <Box>
-      <Typography variant="h6">Issues from Organization:</Typography>
       <Box className={classes.organizationInfo}>
+        <Typography variant="h6">Issues from Organization:</Typography>
         <Avatar className={classes.small} src={organization.avatarUrl}/>
-        <Link className={classes.organizationDetails} href={organization.url}>{organization.name}</Link>
-        <Typography className={classes.organizationDetails} variant="body1">"{organization.description}"</Typography>
+        <Link href={organization.url}>{organization.name}</Link>
       </Box>
-      <Repository repository={organization.repository} />
+      <Typography className={classes.organizationDetails} variant="body1">"{organization.description}"</Typography>
+      <Repository
+        repository={organization.repository}
+        fetchMoreIssues={fetchMoreIssues}
+      />
     </Box>
   )
 }
 
-const Repository = ({repository}) => (
+const Repository = ({repository, fetchMoreIssues}) => (
   <Box>
     <Typography variant="h6">In Repository:</Typography>
     <Link href={repository.url}>{repository.name}</Link>
+    <Typography variant="body1">(total: {repository.issues.totalCount})</Typography>
     <ul>
       {repository.issues.edges.map(issue => (
         <li key={issue.node.id}>
@@ -193,5 +240,10 @@ const Repository = ({repository}) => (
         </li>
       ))}
     </ul>
+
+    <hr/>
+    {repository.issues.pageInfo.hasNextPage && (
+      <Button onClick={fetchMoreIssues} type="button" variant="contained" color="primary" size="small">More</Button>
+    )}
   </Box>
 )
