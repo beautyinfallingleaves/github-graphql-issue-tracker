@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios'
-import {Box, Paper, Typography, Button, Link, Avatar} from '@material-ui/core'
+import {Box, Paper, Typography, Button, Link, Avatar, Grid} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 require('dotenv').config()
 
@@ -40,7 +40,12 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-  }
+  },
+  issueGridItem: {
+    height: 300,
+    width: 225,
+    padding: '2%',
+  },
 }))
 
 const TITLE = 'Search GitHub Issues by Repository (via GraphQL)'
@@ -236,19 +241,22 @@ const Repository = ({repository, fetchMoreIssues}) => {
         <Link href={repository.url}>{repository.name}</Link>
         <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
       </Box>
-      <ul>
-        {repository.issues.edges.map(issue => (
-          <li key={issue.node.id}>
-            <Link href={issue.node.url}>{issue.node.title}</Link>
 
-            <ul>
+      <Grid container spacing={2} justify="space-evenly">
+        {repository.issues.edges.map(issue => (
+          <Grid key={issue.node.id} item>
+            <Paper className={classes.issueGridItem} elevation={3}>
+              <Link href={issue.node.url}>{issue.node.title}</Link>
+              <hr/>
               {issue.node.reactions.edges.map(reaction => (
-                <li key={reaction.node.id}>{reaction.node.content}</li>
+                <Typography variant="caption" key={reaction.node.id}>{reaction.node.content}</Typography>
               ))}
-            </ul>
-          </li>
+              <hr/>
+              <Typography variant="caption">body text will go here</Typography>
+            </Paper>
+          </Grid>
         ))}
-      </ul>
+      </Grid>
 
       <hr/>
       {repository.issues.pageInfo.hasNextPage && (
