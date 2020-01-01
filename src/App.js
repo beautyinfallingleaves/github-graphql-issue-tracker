@@ -13,26 +13,33 @@ const useStyles = makeStyles(theme => ({
     padding: '1rem',
   },
   searchCard: {
-    padding: '10px',
+    padding: 10,
   },
   formControls: {
-    width: '700px',
+    width: 700,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
   organizationInfo: {
+    width: 335,
     display: 'flex',
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   organizationDetails: {
-    marginLeft: '8px',
+    marginLeft: 8,
     fontStyle: 'italic',
   },
   small: {
     width: theme.spacing(3),
     height: theme.spacing(3),
+  },
+  repositoryInfo: {
+    width: 320,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   }
 }))
 
@@ -220,28 +227,33 @@ const Organization = ({organization, errors, fetchMoreIssues}) => {
   )
 }
 
-const Repository = ({repository, fetchMoreIssues}) => (
-  <Box>
-    <Typography variant="h6">In Repository:</Typography>
-    <Link href={repository.url}>{repository.name}</Link>
-    <Typography variant="body1">(total: {repository.issues.totalCount})</Typography>
-    <ul>
-      {repository.issues.edges.map(issue => (
-        <li key={issue.node.id}>
-          <Link href={issue.node.url}>{issue.node.title}</Link>
+const Repository = ({repository, fetchMoreIssues}) => {
+  const classes = useStyles()
+  return (
+    <Box>
+      <Box className={classes.repositoryInfo}>
+        <Typography variant="h6">In Repository:</Typography>
+        <Link href={repository.url}>{repository.name}</Link>
+        <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
+      </Box>
+      <ul>
+        {repository.issues.edges.map(issue => (
+          <li key={issue.node.id}>
+            <Link href={issue.node.url}>{issue.node.title}</Link>
 
-          <ul>
-            {issue.node.reactions.edges.map(reaction => (
-              <li key={reaction.node.id}>{reaction.node.content}</li>
-            ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+            <ul>
+              {issue.node.reactions.edges.map(reaction => (
+                <li key={reaction.node.id}>{reaction.node.content}</li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
 
-    <hr/>
-    {repository.issues.pageInfo.hasNextPage && (
-      <Button onClick={fetchMoreIssues} type="button" variant="contained" color="primary" size="small">More</Button>
-    )}
-  </Box>
-)
+      <hr/>
+      {repository.issues.pageInfo.hasNextPage && (
+        <Button onClick={fetchMoreIssues} type="button" variant="contained" color="primary" size="small">Show More</Button>
+      )}
+    </Box>
+  )
+}
