@@ -8,19 +8,17 @@ require('dotenv').config()
 // styling
 const useStyles = makeStyles(theme => ({
   root: {
-    display: 'flex',
     minHeight: '100vh',
     background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+    padding: '1rem',
   },
   searchCard: {
-    minHeight: '15%',
-    // minWidth: '70%',
-    margin: '15%',
     padding: '10px',
   },
   formControls: {
+    width: '700px',
     display: 'flex',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center'
   },
   organizationInfo: {
