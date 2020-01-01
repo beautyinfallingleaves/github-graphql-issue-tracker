@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import axios from 'axios'
 import {Box, Paper, Typography, Button, Link, Avatar, Grid} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
+import {mapGHReactionToEmoji} from './util'
 require('dotenv').config()
 
 // *******
@@ -11,7 +12,6 @@ const useStyles = makeStyles(theme => ({
     minHeight: '100vh',
     background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
     padding: '1rem',
-    overflow: 'hidden',
   },
   searchCard: {
     padding: 10,
@@ -46,6 +46,7 @@ const useStyles = makeStyles(theme => ({
     height: 300,
     width: 225,
     padding: '2%',
+    overflow: 'auto',
   },
 }))
 
@@ -81,7 +82,7 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
             title
             url
             body
-            reactions(last: 3) {
+            reactions(last: 8) {
               edges {
                 node {
                   id
@@ -244,17 +245,17 @@ const Repository = ({repository, fetchMoreIssues}) => {
         <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
       </Box>
 
-      <Grid container spacing={2} justify="flex-start" wrap="noWrap">
+      <Grid container spacing={2} justify="flex-start">
         {repository.issues.edges.map(issue => (
-          <Grid key={issue.node.id} item xs zeroMinWidth>
+          <Grid key={issue.node.id} item>
             <Paper className={classes.issueGridItem} elevation={3}>
               <Link href={issue.node.url}>{issue.node.title}</Link>
               <hr/>
               {issue.node.reactions.edges.map(reaction => (
-                <Typography variant="caption" key={reaction.node.id}>{reaction.node.content}</Typography>
+                <Typography variant="caption" key={reaction.node.id}>{mapGHReactionToEmoji(reaction.node.content)}</Typography>
               ))}
               <hr/>
-              <Typography variant="caption" noWrap>{issue.node.body}</Typography>
+              <Typography variant="caption">{issue.node.body}</Typography>
             </Paper>
           </Grid>
         ))}
