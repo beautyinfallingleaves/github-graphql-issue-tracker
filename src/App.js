@@ -11,6 +11,7 @@ const useStyles = makeStyles(theme => ({
     minHeight: '100vh',
     background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
     padding: '1rem',
+    overflow: 'hidden',
   },
   searchCard: {
     padding: 10,
@@ -79,6 +80,7 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
             id
             title
             url
+            body
             reactions(last: 3) {
               edges {
                 node {
@@ -242,9 +244,9 @@ const Repository = ({repository, fetchMoreIssues}) => {
         <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
       </Box>
 
-      <Grid container spacing={2} justify="space-evenly">
+      <Grid container spacing={2} justify="flex-start" wrap="noWrap">
         {repository.issues.edges.map(issue => (
-          <Grid key={issue.node.id} item>
+          <Grid key={issue.node.id} item xs zeroMinWidth>
             <Paper className={classes.issueGridItem} elevation={3}>
               <Link href={issue.node.url}>{issue.node.title}</Link>
               <hr/>
@@ -252,7 +254,7 @@ const Repository = ({repository, fetchMoreIssues}) => {
                 <Typography variant="caption" key={reaction.node.id}>{reaction.node.content}</Typography>
               ))}
               <hr/>
-              <Typography variant="caption">body text will go here</Typography>
+              <Typography variant="caption" noWrap>{issue.node.body}</Typography>
             </Paper>
           </Grid>
         ))}
