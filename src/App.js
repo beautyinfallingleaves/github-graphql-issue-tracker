@@ -73,8 +73,10 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
     avatarUrl
     description
     repository(name: $repository) {
+      id
       name
       url
+      viewerHasStarred
       issues(first: 5, after: $endCursor, states: [OPEN]) {
         edges {
           node {
