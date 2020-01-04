@@ -69,43 +69,51 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
     $repository: String!,
     $endCursor: String
   ) {
-  organization(login: $organization) {
-    name
-    url
-    avatarUrl
-    description
-    repository(name: $repository) {
-      id
+    organization(login: $organization) {
       name
       url
-      viewerHasStarred
-      issues(first: 5, after: $endCursor, states: [OPEN]) {
-        edges {
-          node {
-            id
-            title
-            url
-            body
-            reactions(last: 8) {
-              edges {
-                node {
-                  id
-                  content
+      avatarUrl
+      description
+      repository(name: $repository) {
+        id
+        name
+        url
+        viewerHasStarred
+        issues(first: 5, after: $endCursor, states: [OPEN]) {
+          edges {
+            node {
+              id
+              title
+              url
+              body
+              reactions(last: 8) {
+                edges {
+                  node {
+                    id
+                    content
+                  }
                 }
               }
             }
           }
-        }
-        totalCount
-        pageInfo {
-          endCursor
-          hasNextPage
+          totalCount
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
         }
       }
     }
-  }
-}`
+  }`
 
+const ADD_STAR = `
+  mutation ($repositoryId: ID!) {
+    addStar(input: {starrableId: $repositoryId}) {
+      starrable {
+        viewerHasStarred
+      }
+    }
+  }`
 
 export default function App(props) {
   const classes = useStyles()
@@ -127,6 +135,7 @@ export default function App(props) {
   }
 
   const [organization, setOrganization] = useState(null)
+  const [viewerHasStarredState, setViewerHasStarredState] = useState()
   const [errors, setErrors] = useState(null)
   function fetchFromGitHub(path, endCursor) {
     getIssuesOfRepository(path, endCursor).then(queryResult => {
@@ -153,13 +162,9 @@ export default function App(props) {
           }
         }
 
-        console.log('organization:', organization)
-        console.log('updated organization: ', updatedOrganization)
-
         setOrganization(updatedOrganization)
         setErrors(errors)
       }
-
     })
   }
 
@@ -177,8 +182,28 @@ export default function App(props) {
     fetchFromGitHub(path, endCursor)
   }
 
-  function starRepository(id, viewerHasStarred) {
-    console.log('starrrrrr', id, viewerHasStarred)
+
+  function starRepository(repositoryId, viewerHasStarred) {
+    addStarToRepository(repositoryId, viewerHasStarred).then(mutationResult => {
+      const {viewerHasStarred} = mutationResult.data.data.addStar.starrable
+
+      const updatedOrganization = {
+        ...organization,
+        repository: {
+          ...organization.repository,
+          viewerHasStarred,
+        }
+      }
+
+      setOrganization(updatedOrganization)
+    })
+  }
+
+  function addStarToRepository(repositoryId, viewerHasStarred) {
+    return axiosGitHubGraphQL.post('', {
+      query: ADD_STAR,
+      variables: {repositoryId}
+    })
   }
 
   return (
