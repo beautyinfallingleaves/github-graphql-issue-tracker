@@ -1,6 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios'
 import {Box, Paper, Typography, Button, Link, Avatar, Grid} from '@material-ui/core'
+import StarIcon from '@material-ui/icons/Star'
+import StarBorderIcon from '@material-ui/icons/StarBorder'
 import {makeStyles} from '@material-ui/core/styles'
 import {mapGHReactionToEmoji} from './util'
 require('dotenv').config()
@@ -37,7 +39,7 @@ const useStyles = makeStyles(theme => ({
     height: theme.spacing(3),
   },
   repositoryInfo: {
-    width: 320,
+    width: 345,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -175,6 +177,10 @@ export default function App(props) {
     fetchFromGitHub(path, endCursor)
   }
 
+  function starRepository(id, viewerHasStarred) {
+    console.log('starrrrrr', id, viewerHasStarred)
+  }
+
   return (
     <Box className={classes.root}>
       <Paper className={classes.searchCard} elevation={5}>
@@ -200,7 +206,7 @@ export default function App(props) {
         </form>
         <hr/>
         {organization ? (
-            <Organization organization={organization} fetchMoreIssues={fetchMoreIssues} />
+            <Organization organization={organization} fetchMoreIssues={fetchMoreIssues} starRepository={starRepository} />
           ) : (
             <Typography variant="body1">No Organization yet.</Typography>
           )
@@ -210,7 +216,7 @@ export default function App(props) {
   )
 }
 
-const Organization = ({organization, errors, fetchMoreIssues}) => {
+const Organization = ({organization, errors, fetchMoreIssues, starRepository}) => {
   const classes = useStyles()
   if (errors) {
     return (
@@ -232,19 +238,26 @@ const Organization = ({organization, errors, fetchMoreIssues}) => {
       <Repository
         repository={organization.repository}
         fetchMoreIssues={fetchMoreIssues}
+        starRepository={starRepository}
       />
     </Box>
   )
 }
 
-const Repository = ({repository, fetchMoreIssues}) => {
+const Repository = ({repository, fetchMoreIssues, starRepository}) => {
   const classes = useStyles()
+
   return (
     <Box>
       <Box className={classes.repositoryInfo}>
         <Typography variant="h6">In Repository:</Typography>
         <Link href={repository.url}>{repository.name}</Link>
         <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
+        {repository.viewerHasStarred ? (
+          <StarIcon fontSize="small" onClick={() => starRepository(repository.id, repository.viewerHasStarred)} />
+        ) : (
+          <StarBorderIcon fontSize="small" onClick={() => starRepository(repository.id, repository.viewerHasStarred)} />
+        )}
       </Box>
 
       <Grid container spacing={2} justify="flex-start">
