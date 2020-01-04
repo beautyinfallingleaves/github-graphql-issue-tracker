@@ -39,7 +39,7 @@ const useStyles = makeStyles(theme => ({
     height: theme.spacing(3),
   },
   repositoryInfo: {
-    width: 345,
+    width: 645,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -78,6 +78,9 @@ const GET_ISSUES_OF_REPOSITORY_QUERY = `
         id
         name
         url
+        stargazers {
+          totalCount
+        }
         viewerHasStarred
         issues(first: 5, after: $endCursor, states: [OPEN]) {
           edges {
@@ -115,6 +118,17 @@ const ADD_STAR = `
     }
   }`
 
+  const REMOVE_STAR = `
+  mutation ($repositoryId: ID!) {
+    removeStar(input: {starrableId: $repositoryId}) {
+      starrable {
+        viewerHasStarred
+      }
+    }
+  }`
+
+
+
 export default function App(props) {
   const classes = useStyles()
 
@@ -135,7 +149,6 @@ export default function App(props) {
   }
 
   const [organization, setOrganization] = useState(null)
-  const [viewerHasStarredState, setViewerHasStarredState] = useState()
   const [errors, setErrors] = useState(null)
   function fetchFromGitHub(path, endCursor) {
     getIssuesOfRepository(path, endCursor).then(queryResult => {
@@ -182,28 +195,27 @@ export default function App(props) {
     fetchFromGitHub(path, endCursor)
   }
 
-
-  function starRepository(repositoryId, viewerHasStarred) {
-    addStarToRepository(repositoryId, viewerHasStarred).then(mutationResult => {
-      const {viewerHasStarred} = mutationResult.data.data.addStar.starrable
-
-      const updatedOrganization = {
-        ...organization,
-        repository: {
-          ...organization.repository,
-          viewerHasStarred,
-        }
-      }
-
-      setOrganization(updatedOrganization)
-    })
-  }
-
-  function addStarToRepository(repositoryId, viewerHasStarred) {
-    return axiosGitHubGraphQL.post('', {
-      query: ADD_STAR,
+  async function starRepository(repositoryId, viewerHasStarred) {
+    const mutationResult = await axiosGitHubGraphQL.post('', {
+      query: viewerHasStarred ? REMOVE_STAR : ADD_STAR,
       variables: {repositoryId}
     })
+
+    const {data} = mutationResult.data
+    const {totalCount} = organization.repository.stargazers
+
+    const updatedOrganization = {
+      ...organization,
+      repository: {
+        ...organization.repository,
+        viewerHasStarred: data.addStar ? data.addStar.starrable.viewerHasStarred : data.removeStar.starrable.viewerHasStarred,
+        stargazers: {
+          totalCount: data.addStar ? totalCount + 1 : totalCount - 1
+        }
+      }
+    }
+
+    setOrganization(updatedOrganization)
   }
 
   return (
@@ -277,12 +289,13 @@ const Repository = ({repository, fetchMoreIssues, starRepository}) => {
       <Box className={classes.repositoryInfo}>
         <Typography variant="h6">In Repository:</Typography>
         <Link href={repository.url}>{repository.name}</Link>
-        <Typography variant="caption">(total: {repository.issues.totalCount})</Typography>
+        <Typography variant="caption">(total issues: {repository.issues.totalCount})</Typography>
         {repository.viewerHasStarred ? (
           <StarIcon fontSize="small" onClick={() => starRepository(repository.id, repository.viewerHasStarred)} />
         ) : (
           <StarBorderIcon fontSize="small" onClick={() => starRepository(repository.id, repository.viewerHasStarred)} />
         )}
+        <Typography variant="caption">({repository.stargazers.totalCount} users have starred this repository)</Typography>
       </Box>
 
       <Grid container spacing={2} justify="flex-start">
