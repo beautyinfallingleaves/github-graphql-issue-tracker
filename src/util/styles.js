@@ -16,9 +16,8 @@ export const useStyles = makeStyles(theme => ({
     alignItems: 'center'
   },
   organizationInfo: {
-    width: 335,
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   organizationDetails: {
@@ -30,15 +29,12 @@ export const useStyles = makeStyles(theme => ({
     height: theme.spacing(3),
   },
   repositoryInfo: {
-    width: 645,
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   issueGridItem: {
-    height: 300,
-    width: 225,
-    padding: '2%',
+    padding: '0.7%',
     overflow: 'auto',
   },
 }))

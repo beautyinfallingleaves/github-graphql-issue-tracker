@@ -18,8 +18,8 @@ export const Organization = ({organization, errors, fetchMoreIssues, starReposit
     <Box>
       <Box className={classes.organizationInfo}>
         <Typography variant="h6">Issues from Organization:</Typography>
-        <Avatar className={classes.small} src={organization.avatarUrl}/>
-        <Link href={organization.url}>{organization.name}</Link>
+        <Avatar className={classes.small} src={organization.avatarUrl} style={{marginLeft: 10}}/>
+        <Link href={organization.url} style={{marginLeft: 5}}>{organization.name}</Link>
       </Box>
       <Typography className={classes.organizationDetails} variant="body1">"{organization.description}"</Typography>
       <Repository
