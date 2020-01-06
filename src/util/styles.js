@@ -37,4 +37,9 @@ export const useStyles = makeStyles(theme => ({
     padding: '0.7%',
     overflow: 'auto',
   },
+  issueHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
 }))

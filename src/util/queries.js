@@ -24,6 +24,7 @@ export const GET_ISSUES_OF_REPOSITORY_QUERY = `
               title
               url
               body
+              createdAt
               reactions(last: 8) {
                 edges {
                   node {

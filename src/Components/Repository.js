@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {Box, Typography, Link, Grid, Paper, Button} from '@material-ui/core'
 import StarIcon from '@material-ui/icons/Star'
 import StarBorderIcon from '@material-ui/icons/StarBorder'
@@ -6,6 +6,7 @@ import {
   mapGHReactionToEmoji,
   useStyles
 } from '../util'
+import moment from 'moment'
 
 export const Repository = ({repository, fetchMoreIssues, starRepository}) => {
   const classes = useStyles()
@@ -28,10 +29,17 @@ export const Repository = ({repository, fetchMoreIssues, starRepository}) => {
         {repository.issues.edges.map(issue => (
           <Grid key={issue.node.id} item>
             <Paper className={classes.issueGridItem} elevation={3}>
-              <Link href={issue.node.url} style={{marginRight: 5}}>{issue.node.title}</Link>
-              {issue.node.reactions.edges.map(reaction => (
-                <Typography variant="caption" key={reaction.node.id}>{mapGHReactionToEmoji(reaction.node.content)}</Typography>
-              ))}
+              <Box className={classes.issueHeader}>
+                <Box>
+                  <Link href={issue.node.url} style={{marginRight: 5}}>{issue.node.title}</Link>
+                  {issue.node.reactions.edges.map(reaction => (
+                    <Typography variant="caption" key={reaction.node.id}>{mapGHReactionToEmoji(reaction.node.content)}</Typography>
+                  ))}
+                </Box>
+                <Box>
+                  <Typography variant="caption">Created on {moment(issue.node.createdAt).format('MMMM Do YYYY, h:mm:ss a')}</Typography>
+                </Box>
+              </Box>
               <hr/>
               <Typography variant="caption">{issue.node.body}</Typography>
             </Paper>
